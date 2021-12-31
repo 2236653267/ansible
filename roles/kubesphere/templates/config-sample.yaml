@@ -1,0 +1,56 @@
+apiVersion: kubekey.kubesphere.io/v1alpha1
+kind: Cluster
+metadata:
+  name: sample
+spec:
+  hosts:
+{% for hosts in groups['master'] %}
+  - {name: master{{ loop.index }}, address: {{ hosts }}, internalAddress: {{ hosts }}, user: {{ user }}, password: {{ passwd }}}
+{% endfor %}
+{% for hosts in groups['node'] %}
+  - {name: node{{ loop.index }}, address: {{ hosts }}, internalAddress: {{ hosts }}, user: {{ user }}, password: {{ passwd }}}
+{% endfor %}
+  roleGroups:
+    etcd:
+{% for hosts in groups['master'] %}
+    - master{{ loop.index }}
+{% endfor %}
+    master: 
+{% for hosts in groups['master'] %}
+    - master{{ loop.index }}
+{% endfor %}
+    worker:
+{% for hosts in groups['node'] %}
+    - node{{ loop.index }}
+{% endfor %}
+  controlPlaneEndpoint:
+    ##Internal loadbalancer for apiservers 
+{% if lb_app_stats_enabled | bool %}
+    domain: lb.kubesphere.locala
+    address: "{{ elb_vip }}"
+    port: {{ elb_bind_port }}
+{% endif %}
+{% if int_haproxy_stats_enabled | bool %}
+    internalLoadbalancer: haproxy
+{% endif %}
+  kubernetes:
+    version: v1.19.9
+    clusterName: cluster.local
+  network:
+    plugin: {{ network_plugin }}
+    kubePodsCIDR: 10.233.64.0/18
+    kubeServiceCIDR: 10.233.0.0/18
+  registry:
+    registryMirrors: []
+    insecureRegistries: []
+    privateRegistry: "{{ registry_url }}:7233"
+{% if glusterfs_storageclass | bool %}
+  addons:
+  - name: glusterfs
+    namespace: kube-system
+    sources:
+      yaml:
+        path:
+        - /data/boss/addons/glusterfs-sc.yaml
+{% endif %}
+

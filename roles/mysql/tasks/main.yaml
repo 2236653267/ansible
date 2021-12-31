@@ -1,0 +1,20 @@
+---
+- import_tasks: install_mysql.yaml
+  tags:
+    - install_mysql
+    - update-mysql
+
+- import_tasks: initialize_mysql.yaml
+  tags:
+    - init_instance
+
+- import_tasks: start_service.yaml
+
+- import_tasks: init_root_password.yaml
+  tags:
+    - init_root_password
+
+- import_tasks: init_replication.yaml
+  tags:
+    - init_replication
+  when: mysql_gr_enabled

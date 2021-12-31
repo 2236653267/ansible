@@ -1,0 +1,7 @@
+---
+- name: start_haproxy
+  shell: systemctl start haproxy
+- name: enable_haproxy
+  shell: systemctl enable haproxy
+- name: restart_haproxy
+  shell: systemctl restart haproxy

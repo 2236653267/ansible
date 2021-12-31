@@ -1,0 +1,34 @@
+- name: install mysql
+  yum:
+    name:
+      - mysql-community-common-{{ mysql_version }}
+      - mysql-community-libs-{{ mysql_version }}
+      - mysql-community-libs-compat-{{ mysql_version }}
+      - mysql-community-client-{{ mysql_version }}
+      - mysql-community-server-{{ mysql_version }}
+    state: present
+  tags:
+    - yum
+- name: old mysql remove
+  systemd:
+    name: mysqld
+    masked: yes
+    state: stopped
+  tags:
+    - config-systemd-service
+- name: reload systemd config
+  systemd:
+    daemon_reload: yes
+  tags:
+    - config-systemd-service
+- name: create mysql groups
+  group:
+    state: present
+    name: "{{ mysql_user_group }}"
+
+- name: create mysql users
+  user:
+    state: present
+    group: "{{ mysql_user_group }}"
+    name: "{{ mysql_user }}"
+

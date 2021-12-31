@@ -1,0 +1,38 @@
+#kind: Endpoints
+#metadata:
+#  name: heketi
+#  labels:
+#    app: heketi
+#subsets:
+#  - addresses:
+#      - ip: {{ groups['glusterfs'][0] }}
+#    ports:
+#      - port: 8080
+#        name: metrics
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: heketi
+#  labels:
+#    app: heketi
+#spec:
+#  ports:
+#    - protocol: TCP
+#      port: 8080
+#      targetPort: 8080
+#      name: metrics
+#---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gluster-heketi-storageclass
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/glusterfs
+reclaimPolicy: Retain
+parameters:
+  resturl: "http://{{ groups['glusterfs'][0] }}:8080"
+  restauthenabled: "true"
+  volumetype: "replicate:2"
+allowVolumeExpansion: true

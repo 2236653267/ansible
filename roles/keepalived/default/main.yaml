@@ -1,0 +1,3 @@
+---
+lb_app_stats_enabled: true
+int_haproxy_stats_enable: false

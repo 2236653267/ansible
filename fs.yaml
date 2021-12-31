@@ -1,0 +1,47 @@
+---
+- hosts:
+  - all
+  gather_facts: True   
+  roles:             
+  - init
+  - docker
+
+- hosts:
+  - glusterfs
+  gather_facts: True
+  roles:
+  - glusterfs
+  tags:
+  - glusterfs
+
+- hosts:
+  - registry
+  gather_facts: True
+  roles:
+  - registry
+  tags:
+  - registry
+
+- hosts:
+  - lb-app
+  gather_facts: True
+  roles:
+  - keepalived
+  - haproxy
+  tags:
+  - lb-app
+
+- hosts:
+  - master
+  - node
+  gather_facts: True
+  roles:
+  - kubesphere
+
+- hosts:
+  - mysql
+  gather_facts: True
+  roles:
+  - mysql
+  tags:
+  - mysql

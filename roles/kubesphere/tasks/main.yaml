@@ -1,0 +1,92 @@
+---
+- name: check
+  script: check.sh
+  when: inventory_hostname in groups['master'][0]
+- name: mkdir_addons
+  shell: mkdir -p /data/boss/addons/prometheus
+  when: inventory_hostname in groups['master'][0]
+- name: glusterfs_conf
+  template: src=glusterfs-sc.yaml dest=/data/boss/addons
+  when: inventory_hostname in groups['master'][0]
+- name: offline
+  copy: src=offline-installation-tool.sh dest={{ kubesphere_dir }}/ mode=755
+  when: inventory_hostname in groups['master'][0]
+- name: images-list
+  copy: src=images-list.txt dest={{ kubesphere_dir }}/ mode=755
+  when: inventory_hostname in groups['master'][0]
+- name: config 
+  template: src=config-sample.yaml dest={{ kubesphere_dir }}/config-sample.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: kubekey
+  copy: src=kubekey dest={{ kubesphere_dir }}/
+  when: inventory_hostname in groups['master'][0]
+- name: kk
+  copy: src=kk dest={{ kubesphere_dir }}/ mode=755
+  when: inventory_hostname in groups['master'][0]
+- name: issue_prometheus
+  copy: src=prometheus.tar.gz dest=/data/boss/addons/prometheus/
+  when: inventory_hostname in groups['master'][0]
+- name: issue_yaml
+  copy: src=yaml dest=/data/boss/addons/prometheus/
+  when: inventory_hostname in groups['master'][0]
+#- name: issue_values
+#  template: src=values.yaml dest=/data/boss/addons/prometheus/values.yaml
+#  when: inventory_hostname in groups['master'][0]
+- name: issue_additional
+  template: src=prometheus-additional.yaml dest=/data/boss/addons/prometheus/prometheus-additional.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: issue_kubesphere_yaml
+  template: src=kubesphere-installer.yaml dest={{ kubesphere_dir }}/kubesphere-installer.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: issue_cluster_configuration
+  copy: src=cluster-configuration.yaml dest={{ kubesphere_dir }}/cluster-configuration.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: insect_docker_hosts
+  shell: echo "{{ groups['registry'][0] }} {{ registry_url }}" >> /etc/hosts
+- name: docker_login
+  shell: docker login {{ registry_url }}:{{ registry_port }} -uadmin -padmin
+#- name: push
+#  shell: bash {{ kubesphere_dir }}/offline-installation-tool.sh -l {{ kubesphere_dir }}/images-list.txt -d {{ kubesphere_dir }}/kubesphere-images -r {{ registry_url }}:{{ registry_port }}
+#  when: inventory_hostname in groups['master'][0]
+- name: gluster_cli
+  yum:
+    name:
+      - glusterfs-fuse
+    state: present
+- name: kubernetes
+  shell: /data/boss/kubesphere/kk create cluster -f {{ kubesphere_dir }}/config-sample.yaml -y
+  when: inventory_hostname in groups['master'][0]
+  register: ls_result
+- debug: var=ls_result
+- name: timed wait
+  pause: seconds=20
+- name: issue_ingress_yaml
+  copy: src=ingress-nginx.templates.yaml dest=/data/boss/addons
+  when: inventory_hostname in groups['master'][0]
+- name: install nginx_ingress
+  shell: kubectl apply -f /data/boss/addons/ingress-nginx.templates.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: apply_prometheus-additional
+  shell: kubectl create ns prometheus && kubectl -n prometheus create secret generic additional-config --from-file=/data/boss/addons/prometheus/prometheus-additional.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: prometheus_install
+  shell: helm -n prometheus install prometheus /data/boss/addons/prometheus/prometheus.tar.gz
+  when: inventory_hostname in groups['master'][0]
+- name: issue_grafana
+  copy: src=grafana.tar.gz dest=/data/boss/addons/prometheus
+  when: inventory_hostname in groups['master'][0]
+- name: install_grafana
+  shell: helm -n prometheus install grafana /data/boss/addons/prometheus/grafana.tar.gz
+  when: inventory_hostname in groups['master'][0]
+- name: install_kubesphere
+  shell: kubectl apply -f {{ kubesphere_dir }}/kubesphere-installer.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: timed wait
+  pause: seconds=5
+- name: cluster-configuration
+  shell: kubectl apply -f {{ kubesphere_dir }}/cluster-configuration.yaml
+  when: inventory_hostname in groups['master'][0]
+- name: apply_yaml
+  shell: kubectl apply -f /data/boss/addons/prometheus/yaml/monitoring.kubesphere.io_clusterdashboards.yaml -f /data/boss/addons/prometheus/yaml/monitoring.kubesphere.io_dashboards.yaml
+  when: inventory_hostname in groups['master'][0]
+

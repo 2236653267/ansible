@@ -1,0 +1,21 @@
+[Unit]
+Description=Docker Registry Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker exec registry stop
+ExecStartPre=-/usr/bin/docker rm registry
+ExecStart=/usr/bin/docker run --rm --name registry \
+    -v {{ registry_data_dir }}:/var/lib/registry \
+    -e REGISTRY_HTTP_ADDR=0.0.0.0:80 \
+    -e REGISTRY_STORAGE_DELETE_ENABLED=true \
+    -p {{ registry_port }}:80 \
+    registry:2
+ExecStop=/usr/bin/docker stop registry
+ExecStopPost=-/usr/bin/docker run --rm -v {{ registry_data_dir }}:/var/lib/registry \
+    docker.io/library/registry:2 garbage-collect /etc/docker/registry/config.yml
+[Install]
+WantedBy=default.target

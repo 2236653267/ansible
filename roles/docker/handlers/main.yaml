@@ -1,0 +1,9 @@
+---
+- name: start_docker
+  shell: systemctl start docker
+- name: enable_docker
+  shell: systemctl enable docker
+- name: daemon_reload
+  shell: systemctl daemon-reload
+- name: restart_docker
+  shell: systemctl restart docker

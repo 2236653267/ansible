@@ -1,0 +1,5 @@
+[Local]
+name=boss
+baseurl=file:///data/boss/kubesphere/rpm
+gpgcheck=0
+enabled=1

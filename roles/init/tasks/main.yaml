@@ -1,0 +1,16 @@
+---
+- name: copy_package
+  copy: src=rpm.tar.gz dest={{ kubesphere_dir }}/
+#- name: copy_images
+#  copy: src=kubesphere-images.tar.gz dest={{ kubesphere_dir }}/
+#  when: inventory_hostname in groups['master'][0]
+- name: check
+  script: check_package.sh
+- name: copy_repo
+  copy: src=boss.repo dest=/etc/yum.repos.d/
+- name: update
+  yum:
+    name:
+      - socat
+      - conntrack
+    state: present

@@ -1,0 +1,11 @@
+---
+- name: start_glusterd
+  shell: systemctl start glusterd
+- name: enable_glusterd
+  shell: systemctl enable glusterd
+- name: start_heketi
+  shell: systemctl start heketi
+- name: enable_heketi
+  shell: systemctl enable heketi
+- name: restart_glusterfs
+  shell: systemctl restart glusterd

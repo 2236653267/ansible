@@ -1,0 +1,23 @@
+---
+#- name: test
+#  shell: echo 'test' >> /tmp/list
+ # when: inventory_hostname in groups['node'][1]
+#- name: insect_docker_hosts
+#  shell: echo "{{ groups['registry'][0] }} {{ registry_url }}" >> /tmp/test
+- set_fact:
+    keepalived_vip_interface: "{{ item }}"
+  when: >
+    (hostvars[inventory_hostname]['ansible_%s' % item]|default({}))
+    .get('ipv4', {}).get('address') == inventory_hostname
+    or
+    inventory_hostname in ((hostvars[inventory_hostname]['ansible_%s' % item]|default({}))
+    .get('ipv4_secondaries'))|map(attribute='address')|list
+  with_items:
+    - "{{ ansible_interfaces }}"
+- name: copy
+  template: src=keepalived.conf.j2 dest=/tmp/keepalived.conf
+#
+#- name: echo
+#  shell: echo "{{ keepalived_vip_interface }}" >> /tmp/test
+#- name: item
+#  template: src=test.sh dest=/root/test.sh 

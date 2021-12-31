@@ -1,0 +1,5 @@
+[Local]
+name=boss
+baseurl=file://{{ kubesphere_dir }}/rpm
+gpgcheck=0
+enabled=1

@@ -1,0 +1,7 @@
+---
+- name: start_keepalived
+  shell: systemctl start keepalived
+- name: enable_keepalived
+  shell: systemctl enable keepalived
+- name: restart_keepalived
+  shell: systemctl restart keepalived

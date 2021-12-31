@@ -1,0 +1,17 @@
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "data-root": "{{ docker_dir }}",
+  "registry-mirrors": [ "http://31be2901.m.daocloud.io" ],
+  "insecure-registries": [ "127.0.0.1","{{ registry_url }}:{{ registry_port }}","{{ groups['registry'][0] }}:7233" ],
+  "live-restore": true,
+  "max-concurrent-downloads": 10,
+  "default-ulimit": ["nofile=1048576:1048576"],
+  "selinux-enabled": false,
+  "ipv6": false,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-size": "30m",
+    "max-file": "3"
+  }
+}

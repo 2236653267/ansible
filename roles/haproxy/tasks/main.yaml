@@ -1,0 +1,20 @@
+---
+- name: check_haproxy
+  script: check_haproxy.sh
+  register: ls_result
+- debug: var=ls_result
+- name: install
+  yum:
+    name:
+      - haproxy
+    state: present
+- name: issue_config
+  template:
+    src: haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+- name: start haproxy service
+  service:
+    name: haproxy
+    state: started
+    enabled: yes
+

@@ -1,0 +1,49 @@
+---
+- name: copy_heketi
+  copy: src=heketi/heketi dest=/usr/bin mode=755
+- name: copy_heketi_cli
+  copy: src=heketi/heketi-cli dest=/usr/bin mode=755
+- name: install_glusterfs
+  yum: 
+    name: 
+      - glusterfs-server 
+      - glusterfs-cli 
+      - glusterfs-geo-replication 
+      - glusterfs-fuse
+      - glusterfs
+    state: present
+  tags:
+    - yum
+- name: mkdir
+  shell: mkdir -p /etc/heketi
+- name: issue-heketi_service
+  template: src=heketi.service dest=/lib/systemd/system/heketi.service
+- name: issue_topology.json
+  template: src=topology.json dest=/etc/heketi/topology.json
+  when: inventory_hostname in groups['glusterfs'][0]
+- name: issue_heketi.json
+  template: src=heketi.json dest=/etc/heketi/heketi.json
+  when: inventory_hostname in groups['glusterfs'][0]
+- name: mkdir
+  shell: mkdir -p /var/lib/heketi
+- name: start glusterd service
+  service:
+    name: glusterd
+    state: started
+    enabled: yes
+
+- name: start heketi service
+  service:
+    name: heketi
+    state: started
+    enabled: yes
+- name: issue_probe
+  template: src=probe.sh dest=/tmp/probe.sh mode=755
+  when: inventory_hostname in groups['glusterfs'][0]
+- name: install_probe
+  shell: bash /tmp/probe.sh
+  when: inventory_hostname in groups['glusterfs'][0]
+#- name: start_heketi
+- name: glusterfs
+  shell: heketi-cli topology load --json=/etc/heketi/topology.json
+  when: inventory_hostname in groups['glusterfs'][0]

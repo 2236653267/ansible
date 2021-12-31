@@ -1,0 +1,38 @@
+---
+- set_fact:
+    keepalived_vip_interface: "{{ item }}"
+  when: >
+    (hostvars[inventory_hostname]['ansible_%s' % item]|default({}))
+    .get('ipv4', {}).get('address') == inventory_hostname
+    or
+    inventory_hostname in ((hostvars[inventory_hostname]['ansible_%s' % item]|default({}))
+    .get('ipv4_secondaries'))|map(attribute='address')|list
+  with_items:
+    - "{{ ansible_interfaces }}"
+- name: mkdir_keepalived
+  shell: mkdir -p /etc/keepalived
+- name: issue_check_apiserver
+  copy: src=check_apiserver.sh dest=/etc/keepalived/check_apiserver.sh mode=755
+- name: issue_master
+  template: 
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    backup: yes
+#  whith_item:
+#    - keepalived.conf
+- name: check_keepalived
+  script: check_keepalived.sh
+  register: p_result
+- debug: var=p_result
+- name: install_keepalived
+  yum:
+    name:
+      - keepalived
+    state: present
+- name: start_keepalived
+  service:
+    name: keepalived
+    state: started
+    enabled: yes
+- name: restart
+  shell: systemctl restart keepalived

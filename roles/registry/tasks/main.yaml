@@ -1,0 +1,34 @@
+---
+- name: images
+  copy: src=registry.tar dest=/data/boss/registry.tar
+- name: load
+  shell: docker load -i /data/boss/registry.tar
+- name: create registry service
+  template:
+    src: registry.service.j2
+    dest: /etc/systemd/system/registry.service
+  tags:
+    - config-systemd-service
+
+- name: reload systemd config
+  systemd:
+    daemon_reload: yes
+  tags:
+    - config-systemd-service
+
+- name: start registry service
+  service:
+    name: registry
+    state: started
+    enabled: yes
+
+- name: image clean cron
+  cron:
+    name: "registry clean everyday"
+    hour: '3'
+    minute: '30'
+    day: '5'
+    user: 'root'
+    job: "/usr/bin/docker run harbor.boss.com:7233/registry-cli:latest --rm  -r http://{{ inventory_hostname }}:{{ registry_port }} --delete --num 5
+           && systemctl restart registry"
+

@@ -1,0 +1,52 @@
+- name: create mysql replication user
+  shell: >-
+    {{ mysql_cmd }} -sNe '
+        SELECT "ok" FROM mysql.user WHERE user = "{{ mysql_replication_user }}"' | grep ok || {{ mysql_cmd }} -sNe '
+        SET SQL_LOG_BIN=0;
+        CREATE USER {{ mysql_replication_user }}@"%" IDENTIFIED BY "{{ mysql_replication_pass }}";
+        GRANT REPLICATION SLAVE ON *.* TO {{ mysql_replication_user }}@"%";
+        FLUSH PRIVILEGES;
+        SET SQL_LOG_BIN=1;'
+- name: setup group replication channel
+  shell: >-
+    {{ mysql_cmd }} -e '
+        CHANGE MASTER TO
+              MASTER_USER="{{ mysql_replication_user }}"
+            , MASTER_PASSWORD="{{ mysql_replication_pass }}"
+        FOR CHANNEL "group_replication_recovery"'
+- name: load group_replication plugin
+  shell: >-
+    {{ mysql_cmd }} -sNe '
+        SELECT "ok" FROM mysql.plugin WHERE name = "group_replication"' | grep ok || {{ mysql_cmd }} -sNe '
+        INSTALL PLUGIN group_replication SONAME "group_replication.so"'
+- name: bootstrap group replication only on the first instance
+  shell: >-
+    {{ mysql_cmd }} -e '
+        SET GLOBAL group_replication_bootstrap_group=ON;
+        START GROUP_REPLICATION;
+        SET GLOBAL group_replication_bootstrap_group=OFF;'
+  when: inventory_hostname in groups['mysql'][0]
+- name: check and record if group replication started
+  shell: >-
+    {{ mysql_cmd }} -e '
+        SELECT "started" FROM performance_schema.replication_connection_status WHERE SERVICE_STATE = "ON";' | grep started
+  register: _rst_started
+  failed_when: false
+
+- name: join the group
+  shell: >-
+    {{ mysql_cmd }} -e '
+        START GROUP_REPLICATION;'
+#  include_tasks: start_group_replication.yaml
+#  with_items: "{{ groups['mysql'] }}"
+#  loop_control:
+#    loop_var: host_item
+  when: inventory_hostname in groups['mysql'][1:]
+
+- name: modify mysql config
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_data_dir }}/my.cnf"
+  vars:
+    mysql_group_replication_start_on_boot: "on"
+    mysql_group_replication_super_read_only: "on"

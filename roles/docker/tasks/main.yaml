@@ -1,0 +1,20 @@
+---
+- name: check_docker
+  script: check_docker.sh
+  register: p_result
+- debug: var=p_result
+- name: install_docker
+  yum:
+    name:
+      - docker-ce
+    state: present
+- name: mkdir
+  shell: mkdir -p /etc/docker
+- name: issue_daemon
+  template: src=daemon.json dest=/etc/docker/daemon.json
+  notify:
+  - start_docker
+  - enable_docker
+  - daemon_reload
+  - restart_docker
+- meta: flush_handlers

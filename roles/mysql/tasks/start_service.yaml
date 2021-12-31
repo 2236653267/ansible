@@ -1,0 +1,29 @@
+---
+
+- name: generate systemd service unit
+  template:
+    mode: 0644
+    owner: root
+    group: root
+    src: "mysqld-xx.service.j2"
+    dest: "/etc/systemd/system/mysqld-{{ mysql_port }}.service"
+  tags:
+    - config-systemd-service
+
+- name: reload systemd config
+  systemd:
+    daemon_reload: yes
+  tags:
+    - config-systemd-service
+
+- name: start mysqld-<port> service
+  service:
+    name: mysqld-{{ mysql_port }}
+    state: started
+    enabled: yes
+
+- name: wait for mysql to start
+  wait_for:
+    timeout: 60
+    path: '{{ mysql_socket_file }}'
+    state: present

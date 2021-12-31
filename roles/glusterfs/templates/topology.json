@@ -1,0 +1,27 @@
+{
+    "clusters": [
+        {
+            "nodes": [
+{% for host in groups['glusterfs'] %}
+                {
+                    "node": {
+                        "hostnames": {
+                            "manage": [
+                                "{{ host }}"
+                            ],
+                            "storage": [
+                                "{{ host }}"
+                            ]
+                        },
+                        "zone": {{ loop.index }}
+                    },
+                    "devices": [
+                        "{{ glusterfs_dir }}"
+                    ]
+                }{% if loop.index != groups['glusterfs']|length %},{% endif %}
+
+{% endfor %}
+            ]
+        }
+    ]
+}

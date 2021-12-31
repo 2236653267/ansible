@@ -1,0 +1,7 @@
+---
+
+- name: start group replication
+  shell: >-
+    {{ mysql_cmd }} -e '
+        START GROUP_REPLICATION;'
+

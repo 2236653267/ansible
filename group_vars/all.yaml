@@ -1,0 +1,56 @@
+---
+#所有节点的用户名，必须是root
+user: root
+#所有节点的密码，必须保持一致，如有特殊需求请在部署完成后再修改
+passwd: Bosssoft@@develope
+#所有数据的存储目录
+data_dir: "/data"
+
+#init
+
+#glusterfs_vars
+#用作glusterfs的磁盘盘符，必须保持一致，特殊情况联系运维人员
+glusterfs_dir: /dev/vdb
+#heketi_port: 7878
+
+#docker
+#docker的数据存储目录
+docker_dir: "/data/docker"
+#registry的域名，可以按需修改，默认不动
+registry_url: harbor.boss.com
+
+#lb_app
+#自建负载均衡keepalived的vip地址
+keepalived_vip: 192.168.8.250
+#haproxy监听端口
+lb_app_bind_port: 6443
+
+#elb
+#云负载内网负载均衡地址
+elb_vip: 192.168.8.250
+#监听端口
+elb_bind_port: 6443
+#registry
+#registry容器的持久化目录
+registry_data_dir: "/data/registry/data"
+#registry对外暴露端口
+registry_port: 7233
+
+#kubesphere
+#使用自建keepalived+haproxy或云负载均匀将以下配置改为true，不使用则为false
+lb_app_stats_enabled: true
+#使用内置负载均衡请将以下配置改为true，不使用则为false
+int_haproxy_stats_enabled: false
+#集群网络模型，暂仅支持flannel和calico,请按需修改即可
+network_plugin: flannel
+#部署glusterfs-storageclass
+glusterfs_storageclass: true
+#kubesphere部署文件存储路径
+kubesphere_dir: "/data/boss/kubesphere"
+#项目名称，必填参数，告警项目提示，例：公采云生产环境则写成gcy-pro
+targetName: kubesphere
+
+#black-box
+#定义需要监控的接口，新需求自行添加
+static:
+  - http://cms-xm.cce-pro-name.svc.cluster.local:8080/freecms/rest/v1/program/selectOpenTenderInfo.do

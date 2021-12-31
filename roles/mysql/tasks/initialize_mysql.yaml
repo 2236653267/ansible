@@ -1,0 +1,27 @@
+---
+
+- name: make data dirs for mysql
+  file:
+    path: "{{ mysql_data_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ mysql_user }}"
+    group: "{{ mysql_user_group }}"
+- name: initialize_mysql
+  command: >-
+    mysqld
+    --initialize-insecure
+    --datadir={{ mysql_data_dir }}
+    --user={{ mysql_user }}
+  args:
+    creates: "{{ mysql_data_dir }}/mysql"
+- name: template mysql config
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_data_dir }}/my.cnf"
+    mode: 0644
+    owner: "{{ mysql_user }}"
+    group: "{{ mysql_user_group }}"
+  tags:
+    - my-cnf
+

@@ -1,0 +1,324 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-tmpl
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "kube-prometheus.alertmanager.labels" . | nindent 4 }}
+data:
+  alertmanager-mail.tmpl: |-
+    {{`
+    {{ define "email.custom.subject" }}[
+    {{- if gt (.Alerts.Firing | len) 0 }}🔥:{{ .Alerts.Firing | len }}{{ end -}}
+    {{ if and (gt (.Alerts.Firing|len) 0) (gt (.Alerts.Resolved|len) 0) }}/{{ end -}}
+    {{ if gt (.Alerts.Resolved|len) 0 }}💚:{{ .Alerts.Resolved | len }}{{ end -}}
+    ]`}}[{{ include "alertmanager.targetName" . }}]{{`[
+    {{- (index .Alerts 0).Labels.alertname -}}
+    ][
+    {{- (index .Alerts 0).Labels.severity -}}
+    ][
+    {{- (index .Alerts 0).Labels.namespace -}}
+    ]
+    {{- if gt (.Alerts|len) 1 -}}
+    ...more...
+    {{- end }}
+    {{- end }}
+
+
+
+
+    {{ define "email.custom.html" }}
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <!--
+    Style and HTML derived from https://github.com/mailgun/transactional-email-templates
+
+
+    The MIT License (MIT)
+
+    Copyright (c) 2014 Mailgun
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    -->
+    <html xmlns="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>{{ template "__subject" . }}</title>
+
+    <style>
+    * {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    body {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+        -webkit-text-size-adjust: none;
+        height: 100%;
+        line-height: 1.6em;
+        width: 100% !important;
+        background-color: #f6f6f6;
+        margin: 0;
+        padding: 10px;
+        bgcolor: "#f6f6f6"
+    }
+
+    table {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 14px;
+        width: 100%;
+        background-color: #f6f6f6;
+        margin: 0;
+        bgcolor: "#f6f6f6"
+    }
+    tr {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 14px;
+        margin: 0;
+    }
+    td {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 14px;
+        vertical-align: top;
+        margin: 0;
+        valign: top;
+    }
+
+    table.summary-table {
+        cellspacing: 0;
+    }
+
+    table.summary-table thead {
+        background-color: #fa141b;
+        color: #f1f1f1;
+        font-size: 20px;
+    }
+
+    table.summary-table thead td {
+        padding: 16px;
+    }
+
+    table.summary-table tbody td {
+        padding: 10px 16px;
+    }
+
+    table.firing-summary-table thead {
+        background-color: #fa141b;
+    }
+
+    table.firing-summary-table tbody tr {
+        background-color: #ffcccc;
+    }
+
+    table.resolved-summary-table thead {
+        background-color: #339933;
+    }
+
+    table.resolved-summary-table tbody tr {
+        background-color: #d4edda;
+    }
+
+    table.detail-table {
+        margin-top: 20px
+    }
+
+    table.detail-table tr td {
+        padding: 0 0 0 30px;
+        font-size : 12px;
+    }
+
+    table.detail-table tr.title td {
+        padding: 0 0 0 10px;
+        font-size : 14px;
+    }
+
+    table.firing-detail-table tr td {
+        border-bottom: 1pt dashed #ffcccc;
+    }
+
+    table.resolved-detail-table tr td {
+        border-bottom: 1pt dashed #d4edda;
+    }
+
+    view {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 14px;
+        color: #FFF;
+        text-decoration: none;
+        line-height: 2em;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        display: inline-block;
+        border-radius: 5px;
+        text-transform: capitalize;
+        background-color: #348eda;
+        margin: 0;
+        border-color: #348eda;
+        border-style: solid;
+        border-width: 10px 20px;
+    }
+
+    .sendby a {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 12px;
+        color: #999;
+        text-decoration: underline;
+        margin: 0;
+    }
+
+    .sendby td {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        font-size: 12px;
+        vertical-align: top;
+        text-align: center;
+        color: #999;
+        margin: 0;
+        padding: 0 0 20px;
+    }
+    </style>
+    </head>
+
+    <body itemscope="" itemtype="http://schema.org/EmailMessage">
+
+    <table>
+    <tr>
+        <td>
+        <div>
+            <table>
+
+            <tr>
+                <td>
+                <table>
+
+                    {{ if gt (len .Alerts.Firing) 0 }}
+                        <tr>
+                        <td>
+                            <strong>[{{ .Alerts.Firing | len }}] Firing</strong>
+                        </td>
+                        </tr>
+
+                        <tr>
+                        <table class="summary-table firing-summary-table">
+                            <thead>
+                            <tr>
+                                <th>Alert Name</th>
+                                <th>Severity</th>
+                                <th>Pod</th>
+                                <th>Namespace</th>
+                                <th>Annotations</th>
+                                <th>Starts At</th>
+                                <th>Ends At</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {{ range .Alerts.Firing }}
+                            <tr>
+                                <td>{{ .Labels.alertname }}</td>
+                                <td>{{ .Labels.severity }}</td>
+                                <td>{{ .Labels.pod }}</td>
+                                <td>{{ .Labels.namespace }}</td>
+                                <td><details><summary>{{ .Annotations.summary }}</summary>{{ .Annotations.description }}</details></td>
+                                <td>{{ (.StartsAt.Add 28800e9).Format "2006-01-02T15:04:05+08:00" }}</td>
+                                <td>{{ (.EndsAt.Add 28800e9).Format "2006-01-02T15:04:05+08:00" }}</td>
+                            </tr>
+                            {{ end }}
+                            </tbody>
+                        </table>
+                        </tr>
+                    {{ end }}
+
+
+                    {{ if gt (len .Alerts.Resolved) 0 }}
+
+                        {{ if gt (len .Alerts.Firing) 0 }}
+                        <br />
+                        <hr />
+                        <br />
+                        {{ end }}
+
+                        <tr>
+                        <td><strong>[{{ .Alerts.Resolved | len }}] Resolved</strong></td>
+                        </tr>
+
+                        <tr>
+                        <table class="summary-table resolved-summary-table">
+                            <thead>
+                            <tr>
+                                <th>Alert Name</th>
+                                <th>Severity</th>
+                                <th>Pod</th>
+                                <th>Namespace</th>
+                                <th>Annotations</th>
+                                <th>Starts At</th>
+                                <th>Ends At</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {{ range .Alerts.Resolved }}
+                            <tr>
+                                <td>{{ .Labels.alertname }}</td>
+                                <td>{{ .Labels.severity }}</td>
+                                <td>{{ .Labels.pod }}</td>
+                                <td>{{ .Labels.namespace }}</td>
+                                <td><details><summary>{{ .Annotations.summary }}</summary>{{ .Annotations.description }}</details></td>
+                                <td>{{ (.StartsAt.Add 28800e9).Format "2006-01-02T15:04:05+08:00" }}</td>
+                                <td>{{ (.EndsAt.Add 28800e9).Format "2006-01-02T15:04:05+08:00" }}</td>
+                            </tr>
+                            {{ end }}
+                            </tbody>
+                        </table>
+                        </tr>
+
+                    {{ end }}
+                </table>
+                </td>
+            </tr>
+            </table>
+
+            <div class="sendby">
+            <table>
+                <tr>
+                <td align="center" valign="top">Sent by AlertManager</td>
+                </tr>
+            </table>
+            </div>
+
+        </div>
+        </td>
+    </tr>
+    </table>
+
+    </body>
+
+    </html>
+
+    {{ end }}
+    `}}
